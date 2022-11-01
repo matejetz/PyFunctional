@@ -5,13 +5,12 @@ name: Python package
 
 on:
   push:
-    branches: [ master, dev ]
+    branches: [master, dev]
   pull_request:
-    branches: [ master ]
+    branches: [master]
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -22,26 +21,29 @@ jobs:
         #  - python-version: 3.7
         #    use_pandas: 1
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v1
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip poetry
-        poetry install
-        sudo apt-get install pandoc
-    - name: Pylint
-      run: poetry run pylint functional
-      if: always()
-    - name: black
-      run: poetry run black --check functional
-      if: always()
-    - name: Test with pytest
-      run: |
-        poetry run pytest --cov=functional --cov-report=xml
-      if: always()
-    - uses: codecov/codecov-action@v1
-      with:
-        file: ./coverage.xml
+      - uses: actions/checkout@v2
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v1
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip poetry
+          poetry install
+          sudo apt-get install pandoc
+      - name: Mypy
+        run: poetry run mypy "./functional/pipeline.py" "./functional/streams.py" --ignore-missing-imports --follow-imports skip
+        if: always()
+      - name: Pylint
+        run: poetry run pylint functional
+        if: always()
+      - name: black
+        run: poetry run black --check functional
+        if: always()
+      - name: Test with pytest
+        run: |
+          poetry run pytest --cov=functional --cov-report=xml
+        if: always()
+      - uses: codecov/codecov-action@v1
+        with:
+          file: ./coverage.xml
